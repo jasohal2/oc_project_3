@@ -18,5 +18,8 @@ ENV/
 # Project outputs
 output_data/
 
+# Reports
+flake8-report/
+
 # Env files / secrets
 .env

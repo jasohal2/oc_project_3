@@ -25,6 +25,28 @@ python project3.py
 
 CSV files will be created in `output_data/`.
 
+## Development
+
+### Lint and HTML report
+
+Install dev dependencies in your venv:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Generate a flake8 HTML report (opens `flake8-report/index.html`):
+
+```bash
+flake8 --format=html --htmldir=flake8-report .
+```
+
+You can also run flake8 normally:
+
+```bash
+flake8 .
+```
+
 ### Notes
 - Requires internet access for the API calls.
 - Customize `BASE_URL` in `project3.py` if the API endpoint changes.
