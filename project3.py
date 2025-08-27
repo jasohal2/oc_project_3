@@ -8,7 +8,8 @@ from urllib3.util.retry import Retry
 
 BASE_URL = "https://xg4moshwx0.execute-api.us-west-2.amazonaws.com/dev"
 
-# Configure a resilient HTTP session with retries and backoff to handle transient TLS/connection issues.
+# Configure a resilient HTTP session with retries and backoff
+# to handle transient TLS/connection issues.
 SESSION = requests.Session()
 _retry = Retry(
     total=5,
@@ -22,6 +23,7 @@ _retry = Retry(
 _adapter = HTTPAdapter(max_retries=_retry, pool_connections=10, pool_maxsize=10)
 SESSION.mount("https://", _adapter)
 SESSION.mount("http://", _adapter)
+
 
 def get_json(endpoint, params=None, timeout=(5, 30)):
     url = f"{BASE_URL}/{endpoint}"
@@ -37,11 +39,12 @@ def get_json(endpoint, params=None, timeout=(5, 30)):
             last_exc = e
             # Exponential backoff
             time.sleep(2 ** attempt)
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError:
             # For HTTP errors not covered by retry rules, re-raise immediately
             raise
     # If we exhausted retries, bubble up the last exception
     raise last_exc
+
 
 def fetch_georegions():
     response = get_json("geo-regions")
@@ -53,6 +56,7 @@ def fetch_georegions():
         return body
     return response
 
+
 def fetch_data_centers():
     response = get_json("data-centers")
     if isinstance(response, dict) and 'body' in response:
@@ -61,6 +65,7 @@ def fetch_data_centers():
             return json.loads(body)
         return body
     return response
+
 
 def fetch_services():
     response = get_json("services")
@@ -71,6 +76,7 @@ def fetch_services():
         return body
     return response
 
+
 def fetch_computed_metrics(service_name=None, dc_name=None, timestamp="latest"):
     params = {}
     if service_name:
@@ -80,6 +86,7 @@ def fetch_computed_metrics(service_name=None, dc_name=None, timestamp="latest"):
     if timestamp:
         params['timestamp'] = timestamp
     return get_json("metrics/computed", params)
+
 
 def main():
     georegions = fetch_georegions()
@@ -104,12 +111,17 @@ def main():
             dc_name = dc.get('dc_name')
             for service in services:
                 service_name = service.get('service_name')
-                # Add a tiny delay to avoid hammering the API and triggering network/proxy issues
+                # Add a tiny delay to avoid hammering the API and
+                # triggering network/proxy issues
                 time.sleep(0.05)
-                metrics = fetch_computed_metrics(service_name=service_name, dc_name=dc_name, timestamp="latest")
+                metrics = fetch_computed_metrics(
+                    service_name=service_name,
+                    dc_name=dc_name,
+                    timestamp="latest",
+                )
                 # Filter metrics for this dc_name
                 dc_metrics = next((m for m in metrics if m.get('dc_name') == dc_name), {})
-            
+
                 row = {
                     "Data Center": dc_name,
                     "Service": service_name,
@@ -133,6 +145,7 @@ def main():
             print(f"Data for georegion '{region}' written to {csv_file}")
         else:
             print(f"No data collected for georegion '{region}'. Skipping CSV generation.")
+
 
 if __name__ == "__main__":
     main()
